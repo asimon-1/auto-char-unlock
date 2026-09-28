@@ -8,6 +8,7 @@ static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (430.0, 400.0); // Final Destina
 static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (-860.0, 415.0); // Mario
 static CURSOR_POS_THRESHOLD: f32 = 15.0;
 static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
+static CURSOR_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 
 const KEY_RIGHT: u64 = 0x4000;
 const KEY_LEFT: u64 = 0x1000;
@@ -16,6 +17,7 @@ const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
 // const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
+const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
 
 pub fn get_cursor_position() -> Option<(f32, f32)> {
     match mode::get_current_phase() {
@@ -59,10 +61,18 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
     }
 
     if cursor_buttons != 0 {
+        let held_frames = CURSOR_HOLD_FRAMES.load(Ordering::Relaxed);
+        if held_frames >= MAX_CURSOR_HOLD_FRAMES {
+            CURSOR_HOLD_FRAMES.store(0, Ordering::Relaxed);
+            return Ok(());
+        }
+        CURSOR_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
         unsafe {
             println!("[auto-unlock-chars] Buttons {:03x}", cursor_buttons);
             (*state).Buttons |= cursor_buttons;
         }
+    } else {
+        CURSOR_HOLD_FRAMES.store(0, Ordering::Relaxed);
     }
     Ok(())
 }
