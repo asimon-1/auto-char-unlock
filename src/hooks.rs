@@ -1,6 +1,7 @@
 use crate::input;
 use crate::mode;
 use nnsdk::ui2d::Layout;
+use skyline::nn::hid::{GetNpadHandheldState, NpadHandheldState};
 
 pub static OFFSET_DRAW: usize = 0x4b620; // 13.0.5
 
@@ -35,8 +36,18 @@ pub unsafe fn hook_draw(layout: *mut Layout, draw_info: u64, cmd_buffer: u64) {
     original!()(layout, draw_info, cmd_buffer)
 }
 
+#[skyline::hook(replace = GetNpadHandheldState)]
+pub unsafe fn hook_get_npad_handheld_state(
+    state: *mut NpadHandheldState,
+    controller_id: *const u32,
+) {
+    original!()(state, controller_id);
+    let _ = input::move_cursor(state);
+    let _ = input::press_buttons(state);
+}
+
 pub unsafe fn install_hooks() {
     hook_panic();
     skyline::install_hook!(hook_draw);
-    input::add_nn_hid_hook(input::get_npad_state_start);
+    skyline::install_hook!(hook_get_npad_handheld_state);
 }

@@ -14,18 +14,8 @@ const KEY_LEFT: u64 = 0x1000;
 const KEY_DOWN: u64 = 0x8000;
 const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
-const KEY_START: u64 = 0x400;
+// const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
-
-#[allow(improper_ctypes)]
-extern "C" {
-    pub fn add_nn_hid_hook(callback: fn(*mut NpadHandheldState, *const u32));
-}
-
-pub fn get_npad_state_start(state: *mut NpadHandheldState, _controller_id: *const u32) {
-    let _ = move_cursor(state);
-    let _ = press_buttons(state);
-}
 
 pub fn get_cursor_position() -> Option<(f32, f32)> {
     match mode::get_current_phase() {
@@ -70,6 +60,7 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
 
     if cursor_buttons != 0 {
         unsafe {
+            println!("[auto-unlock-chars] Buttons {:03x}", cursor_buttons);
             (*state).Buttons |= cursor_buttons;
         }
     }
