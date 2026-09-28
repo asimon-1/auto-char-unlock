@@ -68,7 +68,6 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
         }
         CURSOR_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
         unsafe {
-            println!("[auto-unlock-chars] Buttons {:03x}", cursor_buttons);
             (*state).Buttons |= cursor_buttons;
         }
     } else {
@@ -122,11 +121,11 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
 
     if buttons != 0 {
         let held_frames = BUTTON_HOLD_FRAMES.load(Ordering::Relaxed);
-        if held_frames < MAX_BUTTON_HOLD_FRAMES {
-            BUTTON_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
-        } else {
+        if held_frames >= MAX_BUTTON_HOLD_FRAMES {
+            BUTTON_HOLD_FRAMES.store(0, Ordering::Relaxed);
             return Ok(());
         }
+        BUTTON_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
 
         unsafe {
             (*state).Buttons |= buttons;
