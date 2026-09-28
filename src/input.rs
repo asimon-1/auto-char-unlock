@@ -2,10 +2,12 @@ use crate::mode;
 use crate::AutomationPhase;
 use anyhow::Result;
 use skyline::nn::hid::NpadHandheldState;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (430.0, 400.0); // Final Destination
 static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (-860.0, 415.0); // Mario
 static CURSOR_POS_THRESHOLD: f32 = 15.0;
+static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 
 const KEY_RIGHT: u64 = 0x4000;
 const KEY_LEFT: u64 = 0x1000;
@@ -13,6 +15,7 @@ const KEY_DOWN: u64 = 0x8000;
 const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
 const KEY_START: u64 = 0x400;
+const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
 
 #[allow(improper_ctypes)]
 extern "C" {
@@ -117,9 +120,18 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
     };
 
     if buttons != 0 {
+        let held_frames = BUTTON_HOLD_FRAMES.load(Ordering::Relaxed);
+        if held_frames < MAX_BUTTON_HOLD_FRAMES {
+            BUTTON_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
+        } else {
+            return Ok(());
+        }
+
         unsafe {
             (*state).Buttons |= buttons;
         }
+    } else {
+        BUTTON_HOLD_FRAMES.store(0, Ordering::Relaxed);
     }
     Ok(())
 }
