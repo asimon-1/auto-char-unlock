@@ -8,14 +8,13 @@ mod mode;
 pub enum AutomationPhase {
     StageSelect,
     CharacterSelect,
-    MatchLoading,
     MatchPlaying,
     ResultsScreen,
     NewFighterAppeared,
-    NewFighterMatchPlaying,
     NewFighterResult,
-    #[default]
     Other,
+    #[default]
+    Disabled,
 }
 
 fn main_loop() {
@@ -37,6 +36,7 @@ fn main_loop() {
 pub fn main() {
     println!("[auto-unlock-chars] hello");
     unsafe {
+        mode::init();
         hooks::install_hooks();
     }
     // spawn new thread for main_loop

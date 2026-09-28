@@ -13,6 +13,7 @@ name = "auto-unlock-chars"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "nnsdk 0.6.2 (git+https://github.com/ultimate-research/nnsdk-rs)",
  "skyline",
  "skyline_smash",
 ]

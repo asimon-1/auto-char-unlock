@@ -1,20 +1,59 @@
-use crate::hooks::OFFSET_DRAW;
 use crate::AutomationPhase;
+use nnsdk::ui2d::Pane;
 use skyline;
 use skyline::nn::ro::LookupSymbol;
-use skyline::nn::ui2d::Layout;
 use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
+use smash::ui2d::SmashPane;
 
 use std::sync::{OnceLock, RwLock};
 
 static CURRENT_PHASE: RwLock<AutomationPhase> = RwLock::new(AutomationPhase::Other);
+pub static CURSOR_POS: RwLock<(f32, f32)> = RwLock::new((0.0, 0.0));
 static FIGHTER_MANAGER_ADDR: OnceLock<usize> = OnceLock::new();
 
-#[skyline::hook(offset = OFFSET_DRAW)]
-pub unsafe fn hook_draw(layout: *mut Layout, draw_info: u64, cmd_buffer: u64) {
-    let layout_name = unsafe { skyline::from_c_str((*layout).layout_name) };
-    let phase = match layout_name.as_str() {
+pub fn init() {
+    lookup_fighter_manager_addr();
+}
+
+fn lookup_fighter_manager_addr() {
+    unsafe {
+        let mut addr: usize = 0;
+        LookupSymbol(
+            &mut addr,
+            "_ZN3lib9SingletonIN3app14FighterManagerEE9instance_E\u{0}"
+                .as_bytes()
+                .as_ptr(),
+        );
+        let _ = FIGHTER_MANAGER_ADDR.set(addr);
+    }
+}
+
+fn is_results_screen() -> bool {
+    unsafe {
+        let addr = *FIGHTER_MANAGER_ADDR
+            .get()
+            .expect("FIGHTER_MANAGER_ADDR is not initialized!");
+        let mgr = *(addr as *mut *mut FighterManagerObject);
+        FighterManagerBindings::is_result_mode(mgr) && FighterManagerBindings::entry_count(mgr) > 0
+    }
+}
+
+pub fn get_current_phase() -> AutomationPhase {
+    CURRENT_PHASE
+        .try_read()
+        .map(|phase| *phase)
+        .inspect_err(|e| {
+            println!(
+                "[auto-unlock-chars] Cound not acquire read lock to CURSOR_POS: {:?}",
+                e
+            );
+        })
+        .unwrap_or_default()
+}
+
+pub fn update_phase(layout_name: &str) {
+    let phase = match layout_name {
         "challenger_joined" => AutomationPhase::NewFighterResult,
         "challenger_appeared" => AutomationPhase::NewFighterAppeared,
         "info_result_window" => AutomationPhase::ResultsScreen,
@@ -45,40 +84,24 @@ pub unsafe fn hook_draw(layout: *mut Layout, draw_info: u64, cmd_buffer: u64) {
             }
         }
     }
-    original!()(layout, draw_info, cmd_buffer)
 }
 
-pub fn install_hooks() {
-    lookup_fighter_manager_addr();
-    skyline::install_hook!(hook_draw);
-}
-
-fn lookup_fighter_manager_addr() {
-    unsafe {
-        let mut addr: usize = 0;
-        LookupSymbol(
-            &mut addr,
-            "_ZN3lib9SingletonIN3app14FighterManagerEE9instance_E\u{0}"
-                .as_bytes()
-                .as_ptr(),
-        );
-        let _ = FIGHTER_MANAGER_ADDR.set(addr);
+pub fn update_cursor_pos(root_pane: &Pane) {
+    if let Some(cursor_pane) = unsafe { root_pane.find_pane_by_name_recursive("set_hand_00") } {
+        match CURSOR_POS.try_write() {
+            Ok(mut cursor_pos) => {
+                println!(
+                    "[auto-unlock-chars] Cursor pos: ({},{})",
+                    cursor_pane.pos_x, cursor_pane.pos_y
+                );
+                *cursor_pos = (cursor_pane.pos_x, cursor_pane.pos_y);
+            }
+            Err(e) => {
+                println!(
+                    "[auto-unlock-chars] Cound not acquire write lock to CURSOR_POS: {:?}",
+                    e
+                );
+            }
+        }
     }
-}
-
-fn is_results_screen() -> bool {
-    unsafe {
-        let addr = *FIGHTER_MANAGER_ADDR
-            .get()
-            .expect("FIGHTER_MANAGER_ADDR is not initialized!");
-        let mgr = *(addr as *mut *mut FighterManagerObject);
-        FighterManagerBindings::is_result_mode(mgr) && FighterManagerBindings::entry_count(mgr) > 0
-    }
-}
-
-pub fn get_current_phase() -> AutomationPhase {
-    CURRENT_PHASE
-        .try_read()
-        .map(|phase| *phase)
-        .unwrap_or_default()
 }

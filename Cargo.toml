@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 anyhow = "1.0.104"
+nnsdk = { git = "https://github.com/ultimate-research/nnsdk-rs" }
 skyline = { git = "https://github.com/ultimate-research/skyline-rs.git" }
 skyline_smash = { git = "https://github.com/ultimate-research/skyline-smash.git" }
 
