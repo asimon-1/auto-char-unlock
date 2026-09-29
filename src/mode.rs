@@ -1,3 +1,4 @@
+use crate::input;
 use crate::AutomationPhase;
 use nnsdk::ui2d::Pane;
 use skyline;
@@ -5,7 +6,6 @@ use skyline::nn::ro::LookupSymbol;
 use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
 use smash::ui2d::SmashPane;
-
 use std::sync::{OnceLock, RwLock};
 
 static CURRENT_PHASE: RwLock<AutomationPhase> = RwLock::new(AutomationPhase::Other);
@@ -74,6 +74,9 @@ pub fn update_phase(layout_name: &str) {
         println!("[auto-unlock-chars] New phase detected! {:?}", phase);
         match CURRENT_PHASE.try_write() {
             Ok(mut current_phase) => {
+                if phase == AutomationPhase::CharacterSelect {
+                    input::reset_character_selected();
+                }
                 *current_phase = phase;
             }
             Err(e) => {
@@ -90,10 +93,6 @@ pub fn update_cursor_pos(root_pane: &Pane) {
     if let Some(cursor_pane) = unsafe { root_pane.find_pane_by_name_recursive("set_hand_00") } {
         match CURSOR_POS.try_write() {
             Ok(mut cursor_pos) => {
-                println!(
-                    "[auto-unlock-chars] Cursor pos: ({},{})",
-                    cursor_pane.pos_x, cursor_pane.pos_y
-                );
                 *cursor_pos = (cursor_pane.pos_x, cursor_pane.pos_y);
             }
             Err(e) => {

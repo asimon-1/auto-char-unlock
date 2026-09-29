@@ -2,20 +2,21 @@ use crate::mode;
 use crate::AutomationPhase;
 use anyhow::Result;
 use skyline::nn::hid::NpadHandheldState;
-use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
 static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (430.0, 400.0); // Final Destination
-static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (-860.0, 415.0); // Mario
+static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (0.0, 180.0);
 static CURSOR_POS_THRESHOLD: f32 = 15.0;
 static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 static CURSOR_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
+pub static CHARACTER_SELECTED: AtomicBool = AtomicBool::new(false);
 
 const KEY_RIGHT: u64 = 0x4000;
 const KEY_LEFT: u64 = 0x1000;
 const KEY_DOWN: u64 = 0x8000;
 const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
-// const KEY_START: u64 = 0x400;
+const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
 const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
 
@@ -76,6 +77,10 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
     Ok(())
 }
 
+pub fn reset_character_selected() {
+    CHARACTER_SELECTED.store(false, Ordering::Relaxed);
+}
+
 pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
     if state.is_null() {
         anyhow::bail!("controller state is unavailable");
@@ -108,7 +113,12 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
         }
         AutomationPhase::CharacterSelect => {
             if close_to_target {
-                KEY_A
+                if CHARACTER_SELECTED.load(Ordering::Relaxed) {
+                    KEY_START
+                } else {
+                    CHARACTER_SELECTED.store(true, Ordering::Relaxed);
+                    KEY_A
+                }
             } else {
                 0
             }
