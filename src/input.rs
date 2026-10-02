@@ -4,7 +4,7 @@ use anyhow::Result;
 use skyline::nn::hid::NpadHandheldState;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
-static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (430.0, 400.0); // Final Destination
+static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (200.0, 400.0); // Small Battflefield
 static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (0.0, 180.0);
 static CURSOR_POS_THRESHOLD: f32 = 15.0;
 static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
