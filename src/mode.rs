@@ -2,6 +2,7 @@ use crate::input;
 use crate::AutomationPhase;
 use nnsdk::ui2d::Pane;
 use skyline;
+use skyline::nn::oe::ReportUserIsActive;
 use skyline::nn::ro::LookupSymbol;
 use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
@@ -72,6 +73,10 @@ pub fn update_phase(layout_name: &str) {
     let needs_update = (current_phase != phase) && (phase != AutomationPhase::Other);
     if needs_update {
         println!("[auto-unlock-chars] New phase detected! {:?}", phase);
+        unsafe {
+            // Prevent switch from going to sleep
+            ReportUserIsActive();
+        }
         match CURRENT_PHASE.try_write() {
             Ok(mut current_phase) => {
                 if phase == AutomationPhase::CharacterSelect {
