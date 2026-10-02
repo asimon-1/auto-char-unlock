@@ -1,9 +1,8 @@
+use crate::fighter_control;
 use crate::input;
 use crate::mode;
 use nnsdk::ui2d::Layout;
 use skyline::nn::hid::{GetNpadHandheldState, NpadHandheldState};
-
-pub static OFFSET_DRAW: usize = 0x4b620; // 13.0.5
 
 fn hook_panic() {
     std::panic::set_hook(Box::new(|info| {
@@ -26,7 +25,7 @@ fn hook_panic() {
     }));
 }
 
-#[skyline::hook(offset = OFFSET_DRAW)]
+#[skyline::hook(offset = 0x4b620)] // 13.0.5
 pub unsafe fn hook_draw(layout: *mut Layout, draw_info: u64, cmd_buffer: u64) {
     let layout_name = unsafe { skyline::from_c_str((*layout).layout_name) };
     mode::update_phase(&layout_name);
@@ -46,8 +45,15 @@ pub unsafe fn hook_get_npad_handheld_state(
     let _ = input::press_buttons(state);
 }
 
-pub unsafe fn install_hooks() {
+#[skyline::hook(offset = 0x2da180)] // 13.0.5
+pub unsafe fn hook_set_cpu_controls(control_data: *mut *mut u8) {
+    original!()(control_data);
+    fighter_control::set_cpu_controls_selfdestruct(control_data);
+}
+
+pub fn install_hooks() {
     hook_panic();
     skyline::install_hook!(hook_draw);
     skyline::install_hook!(hook_get_npad_handheld_state);
+    skyline::install_hook!(hook_set_cpu_controls);
 }

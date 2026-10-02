@@ -1,5 +1,42 @@
-use anyhow::Result;
+use crate::mode;
+use crate::AutomationPhase;
+use smash::app::sv_math::rand;
+use smash::hash40;
 
-pub fn enable_level_9_for_entry(&mut self, entry_id: u32) -> Result<()>;
-pub fn disable_level_9_for_entry(&mut self, entry_id: u32);
-pub fn is_entry_level_9(&self, entry_id: u32) -> bool;
+#[repr(C)]
+struct ControlModuleInternal {
+    vtable: *mut u8,
+    controller_index: i32,
+    buttons: u32,
+    stick_x: f32,
+    stick_y: f32,
+    padding: [f32; 2],
+    unknown: [u32; 8],
+    clamped_lstick_x: f32,
+    clamped_lstick_y: f32,
+    padding2: [f32; 2],
+    clamped_rstick_x: f32,
+    clamped_rstick_y: f32,
+}
+
+pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
+    if mode::get_current_phase() != AutomationPhase::MatchPlaying || control_data.is_null() {
+        return;
+    }
+
+    let controller_data = *control_data.add(1) as *mut ControlModuleInternal;
+    if controller_data.is_null() {
+        return;
+    }
+
+    // Don't press jump on every frame
+    let should_jump = rand(hash40("fighter"), 10) == 0;
+
+    (*controller_data).buttons = if should_jump { 0x4 } else { 0 };
+    (*controller_data).stick_x = 1.0;
+    (*controller_data).stick_y = 0.0;
+    (*controller_data).clamped_lstick_x = 1.0;
+    (*controller_data).clamped_lstick_y = 0.0;
+    (*controller_data).clamped_rstick_x = 0.0;
+    (*controller_data).clamped_rstick_y = 0.0;
+}

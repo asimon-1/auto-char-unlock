@@ -1,3 +1,4 @@
+mod fighter_control;
 mod hooks;
 mod input;
 mod mode;
