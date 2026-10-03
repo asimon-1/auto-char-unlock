@@ -2,7 +2,7 @@ use crate::input;
 use crate::AutomationPhase;
 use nnsdk::ui2d::Pane;
 use skyline;
-use skyline::nn::oe::ReportUserIsActive;
+use skyline::nn::oe::{ReportUserIsActive, RequestToRelaunchApplication};
 use skyline::nn::ro::LookupSymbol;
 use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
@@ -67,8 +67,6 @@ pub fn update_phase(layout_name: &str) {
         }
         "stage_select2" => AutomationPhase::StageSelect,
         "chara_select" => AutomationPhase::CharacterSelect,
-        "colle_anniversary" => AutomationPhase::Milestone,
-        "anniversary_popup" => AutomationPhase::Milestone,
         _ => AutomationPhase::Other,
     };
     let current_phase = get_current_phase();
@@ -83,6 +81,9 @@ pub fn update_phase(layout_name: &str) {
             Ok(mut current_phase) => {
                 if phase == AutomationPhase::CharacterSelect {
                     input::reset_character_selected();
+                }
+                if phase == AutomationPhase::NewFighterResult {
+                    on_character_unlocked();
                 }
                 *current_phase = phase;
             }
@@ -109,5 +110,11 @@ pub fn update_cursor_pos(root_pane: &Pane) {
                 );
             }
         }
+    }
+}
+
+fn on_character_unlocked() {
+    if input::get_stick_action_count() > input::CPU_CONTROL_ACTION_THRESHOLD {
+        unsafe { RequestToRelaunchApplication() }
     }
 }

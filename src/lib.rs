@@ -11,10 +11,8 @@ pub enum AutomationPhase {
     ResultsScreen,
     NewFighterAppeared,
     NewFighterResult,
-    Milestone,
-    Other,
     #[default]
-    Disabled,
+    Other,
 }
 
 #[skyline::main(name = "auto-unlock-chars")]

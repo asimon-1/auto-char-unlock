@@ -21,7 +21,7 @@ const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
 const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
 pub const CPU_CONTROL_ACTION_THRESHOLD: u16 = 8100;
-const STICK_INPUT_COUNT_FLAG_PATH: &str = "SD:/FLAG_STICK_INPUT_COUNT";
+const STICK_INPUT_COUNT_FLAG_PATH: &str = "sd:/FLAG_STICK_INPUT_COUNT";
 
 pub fn get_cursor_position() -> Option<(f32, f32)> {
     match mode::get_current_phase() {
@@ -146,11 +146,8 @@ pub fn press_buttons(state: *mut NpadHandheldState) {
                 0
             }
         }
-        AutomationPhase::NewFighterAppeared
-        | AutomationPhase::NewFighterResult
-        | AutomationPhase::ResultsScreen => KEY_A,
-        AutomationPhase::Milestone => KEY_A,
-        _ => 0,
+        AutomationPhase::MatchPlaying => 0,
+        _ => KEY_A,
     };
 
     if buttons != 0 {
