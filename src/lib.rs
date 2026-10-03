@@ -18,6 +18,8 @@ pub enum AutomationPhase {
 
 #[skyline::main(name = "auto-unlock-chars")]
 pub fn main() {
+    println!("[auto-unlock-chars] Initializing plugin");
     mode::init();
     hooks::install_hooks();
+    println!("[auto-unlock-chars] Hooks installed");
 }
