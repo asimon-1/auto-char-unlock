@@ -2,16 +2,22 @@ use crate::input;
 use crate::AutomationPhase;
 use nnsdk::ui2d::Pane;
 use skyline;
-use skyline::nn::oe::{ReportUserIsActive, RequestToRelaunchApplication};
+use skyline::nn::oe::ReportUserIsActive;
 use skyline::nn::ro::LookupSymbol;
 use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
 use smash::ui2d::SmashPane;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{OnceLock, RwLock};
+use std::time::{Duration, Instant};
 
 static CURRENT_PHASE: RwLock<AutomationPhase> = RwLock::new(AutomationPhase::Other);
 pub static CURSOR_POS: RwLock<(f32, f32)> = RwLock::new((0.0, 0.0));
 static FIGHTER_MANAGER_ADDR: OnceLock<usize> = OnceLock::new();
+static MATCH_START_TIME: RwLock<Option<Instant>> = RwLock::new(None);
+static MATCH_TIMER_READY: AtomicBool = AtomicBool::new(false);
+
+const CPU_CONTROL_DELAY: Duration = Duration::from_secs(45);
 
 pub fn init() {
     lookup_fighter_manager_addr();
@@ -53,6 +59,29 @@ pub fn get_current_phase() -> AutomationPhase {
         .unwrap_or_default()
 }
 
+pub fn check_match_timer() -> bool {
+    let is_ready = MATCH_START_TIME
+        .try_read()
+        .map(|start_time| {
+            start_time.is_some_and(|start_time| start_time.elapsed() >= CPU_CONTROL_DELAY)
+        })
+        .unwrap_or(false);
+    if is_ready && !MATCH_TIMER_READY.swap(true, Ordering::Relaxed) {
+        println!("[auto-unlock-chars] Match timer complete; CPU controls may activate");
+    }
+    is_ready
+}
+
+fn update_match_timer(phase: AutomationPhase) {
+    if let Ok(mut start_time) = MATCH_START_TIME.try_write() {
+        *start_time = (phase == AutomationPhase::MatchPlaying).then(Instant::now);
+        MATCH_TIMER_READY.store(false, Ordering::Relaxed);
+        if phase == AutomationPhase::MatchPlaying {
+            println!("[auto-unlock-chars] Match timer started: CPU controls delay is 45 seconds");
+        }
+    }
+}
+
 pub fn update_phase(layout_name: &str) {
     let phase = match layout_name {
         "challenger_joined" => AutomationPhase::NewFighterResult,
@@ -82,9 +111,7 @@ pub fn update_phase(layout_name: &str) {
                 if phase == AutomationPhase::CharacterSelect {
                     input::reset_character_selected();
                 }
-                if phase == AutomationPhase::NewFighterResult {
-                    on_character_unlocked();
-                }
+                update_match_timer(phase);
                 *current_phase = phase;
             }
             Err(e) => {
@@ -110,11 +137,5 @@ pub fn update_cursor_pos(root_pane: &Pane) {
                 );
             }
         }
-    }
-}
-
-fn on_character_unlocked() {
-    if input::get_stick_action_count() > input::CPU_CONTROL_ACTION_THRESHOLD {
-        unsafe { RequestToRelaunchApplication() }
     }
 }

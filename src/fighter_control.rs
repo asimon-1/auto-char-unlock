@@ -2,6 +2,9 @@ use crate::input;
 use crate::mode;
 use crate::AutomationPhase;
 use rand::{self, Rng};
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static CPU_CONTROLS_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 #[repr(C)]
 struct ControlModuleInternal {
@@ -29,7 +32,9 @@ pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
         return;
     }
 
-    if input::get_stick_action_count() < input::CPU_CONTROL_ACTION_THRESHOLD {
+    let action_threshold_reached =
+        input::get_stick_action_count() >= input::CPU_CONTROL_ACTION_THRESHOLD;
+    if !action_threshold_reached && !mode::check_match_timer() {
         (*controller_data).buttons = 0;
         (*controller_data).stick_x = 0.0;
         (*controller_data).stick_y = 0.0;
@@ -38,6 +43,10 @@ pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
         (*controller_data).clamped_rstick_x = 0.0;
         (*controller_data).clamped_rstick_y = 0.0;
         return;
+    }
+
+    if !CPU_CONTROLS_ACTIVE.swap(true, Ordering::Relaxed) {
+        println!("[auto-unlock-chars] CPU controls activated");
     }
 
     // Don't press jump on every frame

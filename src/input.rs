@@ -18,7 +18,7 @@ const KEY_DOWN: u64 = 0x8000;
 const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
 const KEY_START: u64 = 0x400;
-const MAX_BUTTON_HOLD_FRAMES: u8 = 8;
+const MAX_BUTTON_HOLD_FRAMES: u8 = 12;
 const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
 pub const CPU_CONTROL_ACTION_THRESHOLD: u16 = 8100;
 const STICK_INPUT_COUNT_FLAG_PATH: &str = "sd:/FLAG_STICK_INPUT_COUNT";
@@ -87,20 +87,28 @@ pub fn get_stick_action_count() -> u16 {
 }
 
 pub fn initialize_stick_action_count() {
-    let action_count = if std::path::Path::new(STICK_INPUT_COUNT_FLAG_PATH).exists() {
+    let has_flag = std::path::Path::new(STICK_INPUT_COUNT_FLAG_PATH).exists();
+    let action_count = if has_flag {
         CPU_CONTROL_ACTION_THRESHOLD
     } else {
         0
     };
     STICK_ACTIONS.store(action_count, Ordering::Relaxed);
+    println!(
+        "[auto-unlock-chars] Stick actions initialized to {} (flag present: {})",
+        action_count, has_flag
+    );
 }
 
 fn write_stick_input_count_flag() {
-    if let Err(error) = std::fs::File::create(STICK_INPUT_COUNT_FLAG_PATH) {
-        println!(
-            "[auto-unlock-chars] Could not create stick input count flag: {:?}",
-            error
-        );
+    match std::fs::File::create(STICK_INPUT_COUNT_FLAG_PATH) {
+        Ok(_) => println!("[auto-unlock-chars] Stick action threshold reached; flag created"),
+        Err(error) => {
+            println!(
+                "[auto-unlock-chars] Could not create stick input count flag: {:?}",
+                error
+            );
+        }
     }
 }
 
@@ -177,9 +185,9 @@ pub fn move_stick(state: *mut NpadHandheldState) {
         return;
     }
 
-    let input_frame = STICK_INPUT_FRAMES.fetch_add(1, Ordering::Relaxed) % 10;
-    if input_frame >= 5 {
-        if input_frame == 5 {
+    let input_frame = STICK_INPUT_FRAMES.fetch_add(1, Ordering::Relaxed) % 4;
+    if input_frame >= 2 {
+        if input_frame == 2 {
             let action_count = STICK_ACTIONS.load(Ordering::Relaxed);
             if action_count < CPU_CONTROL_ACTION_THRESHOLD
                 && STICK_ACTIONS.fetch_add(1, Ordering::Relaxed) + 1 == CPU_CONTROL_ACTION_THRESHOLD
@@ -196,6 +204,6 @@ pub fn move_stick(state: *mut NpadHandheldState) {
 
     unsafe {
         (*state).LStickX = 0;
-        (*state).LStickY = i32::MAX;
+        (*state).LStickY = i32::MIN;
     }
 }
