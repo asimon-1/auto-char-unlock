@@ -19,7 +19,6 @@ pub enum AutomationPhase {
 pub fn main() {
     println!("[auto-unlock-chars] Initializing plugin");
     mode::init();
-    input::initialize_stick_action_count();
     hooks::install_hooks();
     println!("[auto-unlock-chars] Hooks installed");
 }

@@ -1,4 +1,3 @@
-use crate::input;
 use crate::mode;
 use crate::AutomationPhase;
 use rand::{self, Rng};
@@ -29,19 +28,6 @@ pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
 
     let controller_data = *control_data.add(1) as *mut ControlModuleInternal;
     if controller_data.is_null() {
-        return;
-    }
-
-    let action_threshold_reached =
-        input::get_stick_action_count() >= input::CPU_CONTROL_ACTION_THRESHOLD;
-    if !action_threshold_reached && !mode::check_match_timer() {
-        (*controller_data).buttons = 0;
-        (*controller_data).stick_x = 0.0;
-        (*controller_data).stick_y = 0.0;
-        (*controller_data).clamped_lstick_x = 0.0;
-        (*controller_data).clamped_lstick_y = 0.0;
-        (*controller_data).clamped_rstick_x = 0.0;
-        (*controller_data).clamped_rstick_y = 0.0;
         return;
     }
 

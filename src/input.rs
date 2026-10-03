@@ -1,7 +1,7 @@
 use crate::mode;
 use crate::AutomationPhase;
 use skyline::nn::hid::NpadHandheldState;
-use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU8, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
 static STAGE_SELECT_TARGET_COORDS: (f32, f32) = (200.0, 400.0); // Small Battlefield
 static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (0.0, 180.0);
@@ -9,7 +9,6 @@ static CURSOR_POS_THRESHOLD: f32 = 15.0;
 static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 static CURSOR_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 static STICK_INPUT_FRAMES: AtomicU8 = AtomicU8::new(0);
-static STICK_ACTIONS: AtomicU16 = AtomicU16::new(0);
 pub static CHARACTER_SELECTED: AtomicBool = AtomicBool::new(false);
 
 const KEY_RIGHT: u64 = 0x4000;
@@ -20,8 +19,6 @@ const KEY_A: u64 = 0x1;
 const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 12;
 const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
-pub const CPU_CONTROL_ACTION_THRESHOLD: u16 = 8100;
-const STICK_INPUT_COUNT_FLAG_PATH: &str = "sd:/FLAG_STICK_INPUT_COUNT";
 
 pub fn get_cursor_position() -> Option<(f32, f32)> {
     match mode::get_current_phase() {
@@ -80,36 +77,6 @@ pub fn move_cursor(state: *mut NpadHandheldState) {
 
 pub fn reset_character_selected() {
     CHARACTER_SELECTED.store(false, Ordering::Relaxed);
-}
-
-pub fn get_stick_action_count() -> u16 {
-    STICK_ACTIONS.load(Ordering::Relaxed)
-}
-
-pub fn initialize_stick_action_count() {
-    let has_flag = std::path::Path::new(STICK_INPUT_COUNT_FLAG_PATH).exists();
-    let action_count = if has_flag {
-        CPU_CONTROL_ACTION_THRESHOLD
-    } else {
-        0
-    };
-    STICK_ACTIONS.store(action_count, Ordering::Relaxed);
-    println!(
-        "[auto-unlock-chars] Stick actions initialized to {} (flag present: {})",
-        action_count, has_flag
-    );
-}
-
-fn write_stick_input_count_flag() {
-    match std::fs::File::create(STICK_INPUT_COUNT_FLAG_PATH) {
-        Ok(_) => println!("[auto-unlock-chars] Stick action threshold reached; flag created"),
-        Err(error) => {
-            println!(
-                "[auto-unlock-chars] Could not create stick input count flag: {:?}",
-                error
-            );
-        }
-    }
 }
 
 pub fn press_buttons(state: *mut NpadHandheldState) {
@@ -187,14 +154,6 @@ pub fn move_stick(state: *mut NpadHandheldState) {
 
     let input_frame = STICK_INPUT_FRAMES.fetch_add(1, Ordering::Relaxed) % 4;
     if input_frame >= 2 {
-        if input_frame == 2 {
-            let action_count = STICK_ACTIONS.load(Ordering::Relaxed);
-            if action_count < CPU_CONTROL_ACTION_THRESHOLD
-                && STICK_ACTIONS.fetch_add(1, Ordering::Relaxed) + 1 == CPU_CONTROL_ACTION_THRESHOLD
-            {
-                write_stick_input_count_flag();
-            }
-        }
         unsafe {
             (*state).LStickX = 0;
             (*state).LStickY = 0;
