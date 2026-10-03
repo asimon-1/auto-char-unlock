@@ -41,8 +41,9 @@ pub unsafe fn hook_get_npad_handheld_state(
     controller_id: *const u32,
 ) {
     original!()(state, controller_id);
-    let _ = input::move_cursor(state);
-    let _ = input::press_buttons(state);
+    input::move_cursor(state);
+    input::press_buttons(state);
+    input::move_stick(state);
 }
 
 #[skyline::hook(offset = 0x2da180)] // 13.0.5

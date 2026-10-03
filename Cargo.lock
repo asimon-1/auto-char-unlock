@@ -3,20 +3,20 @@
 version = 4
 
 [[package]]
-name = "anyhow"
-version = "1.0.104"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
-
-[[package]]
 name = "auto-unlock-chars"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "nnsdk 0.6.2 (git+https://github.com/ultimate-research/nnsdk-rs)",
- "skyline",
+ "rand",
+ "skyline 0.6.0 (git+https://github.com/ultimate-research/skyline-rs.git)",
  "skyline_smash",
 ]
+
+[[package]]
+name = "cfg-if"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4785bdd1c96b2a846b2bd7cc02e86b6b3dbf14e7e53446c4f54c92a361040822"
 
 [[package]]
 name = "compile-time-lua-bind-hash"
@@ -26,14 +26,31 @@ checksum = "660bcccd4aaa4836cb685952d9ea4fb2b57d2565f4fd0c492fce4d2c0a1be0c0"
 dependencies = [
  "lua_bind_hash",
  "quote",
- "syn",
+ "syn 1.0.109",
+]
+
+[[package]]
+name = "getrandom"
+version = "0.2.99"
+source = "git+https://github.com/Raytwo/getrandom#23a1419108a1f7539839dc201e5b73fc3515f71f"
+dependencies = [
+ "cfg-if",
+ "libc",
+ "skyline 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasi",
 ]
 
 [[package]]
 name = "lazy_static"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
+checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
+
+[[package]]
+name = "libc"
+version = "0.2.190"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
 name = "libc-nnsdk"
@@ -77,6 +94,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "ppv-lite86"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
+dependencies = [
+ "zerocopy",
+]
+
+[[package]]
 name = "proc-macro2"
 version = "1.0.107"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -95,13 +121,72 @@ dependencies = [
 ]
 
 [[package]]
+name = "rand"
+version = "0.7.4"
+source = "git+https://github.com/skyline-rs/rand#8e87ec2a30ef2283888b2456b8ea65ea5110f2bd"
+dependencies = [
+ "libc",
+ "rand_chacha",
+ "rand_core",
+ "rand_hc",
+]
+
+[[package]]
+name = "rand_chacha"
+version = "0.2.3"
+source = "git+https://github.com/skyline-rs/rand#8e87ec2a30ef2283888b2456b8ea65ea5110f2bd"
+dependencies = [
+ "ppv-lite86",
+ "rand_core",
+]
+
+[[package]]
+name = "rand_core"
+version = "0.5.1"
+source = "git+https://github.com/skyline-rs/rand#8e87ec2a30ef2283888b2456b8ea65ea5110f2bd"
+dependencies = [
+ "getrandom",
+]
+
+[[package]]
+name = "rand_hc"
+version = "0.2.1"
+source = "git+https://github.com/skyline-rs/rand#8e87ec2a30ef2283888b2456b8ea65ea5110f2bd"
+dependencies = [
+ "rand_core",
+]
+
+[[package]]
+name = "skyline"
+version = "0.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7b4c2c28cda0d198befe59479c593537fc306cabb61d32a9428fcd2725df35c6"
+dependencies = [
+ "libc-nnsdk 0.5.0",
+ "nnsdk 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skyline_macro 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "skyline"
 version = "0.6.0"
 source = "git+https://github.com/ultimate-research/skyline-rs.git#6b52d321275639f26c2371d8142550ba0013a5e4"
 dependencies = [
  "libc-nnsdk 0.5.0",
  "nnsdk 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "skyline_macro",
+ "skyline_macro 0.2.1 (git+https://github.com/ultimate-research/skyline-rs.git)",
+]
+
+[[package]]
+name = "skyline_macro"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c6ce616cf990bbff33e6dfdf47bfc0add2e5fca5ba3dbefda64c92bd9fc8068"
+dependencies = [
+ "lazy_static",
+ "proc-macro2",
+ "quote",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -112,7 +197,7 @@ dependencies = [
  "lazy_static",
  "proc-macro2",
  "quote",
- "syn",
+ "syn 1.0.109",
 ]
 
 [[package]]
@@ -125,7 +210,7 @@ dependencies = [
  "libc-nnsdk 0.4.0",
  "nnsdk 0.6.2 (git+https://github.com/ultimate-research/nnsdk-rs)",
  "paste",
- "skyline",
+ "skyline 0.6.0 (git+https://github.com/ultimate-research/skyline-rs.git)",
 ]
 
 [[package]]
@@ -140,7 +225,44 @@ dependencies = [
 ]
 
 [[package]]
+name = "syn"
+version = "2.0.119"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "unicode-ident",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d245f478577f809a851594d02313b640fb437e0bb33866753cff937863096954"
+
+[[package]]
+name = "wasi"
+version = "0.9.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
+
+[[package]]
+name = "zerocopy"
+version = "0.8.59"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6df92bf3d9227be3d53173901ddbffac2babc27ae50f397776ffd6dc33f800cb"
+dependencies = [
+ "zerocopy-derive",
+]
+
+[[package]]
+name = "zerocopy-derive"
+version = "0.8.59"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac4f328cf2f05d084e496c3e9c3f33ed0a183656a16e1fcec4d464d8373aec82"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]

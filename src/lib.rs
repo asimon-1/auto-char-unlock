@@ -11,6 +11,7 @@ pub enum AutomationPhase {
     ResultsScreen,
     NewFighterAppeared,
     NewFighterResult,
+    Milestone,
     Other,
     #[default]
     Disabled,

@@ -1,6 +1,5 @@
 use crate::mode;
 use crate::AutomationPhase;
-use anyhow::Result;
 use skyline::nn::hid::NpadHandheldState;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 
@@ -9,6 +8,7 @@ static CHAR_SELECT_TARGET_COORDS: (f32, f32) = (0.0, 180.0);
 static CURSOR_POS_THRESHOLD: f32 = 15.0;
 static BUTTON_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
 static CURSOR_HOLD_FRAMES: AtomicU8 = AtomicU8::new(0);
+static STICK_INPUT_FRAMES: AtomicU8 = AtomicU8::new(0);
 pub static CHARACTER_SELECTED: AtomicBool = AtomicBool::new(false);
 
 const KEY_RIGHT: u64 = 0x4000;
@@ -36,19 +36,18 @@ pub fn get_cursor_position() -> Option<(f32, f32)> {
     }
 }
 
-pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
+pub fn move_cursor(state: *mut NpadHandheldState) {
     if state.is_null() {
-        anyhow::bail!("controller state is unavailable");
+        return;
     }
 
     let phase = mode::get_current_phase();
     let cursor_target = match phase {
         AutomationPhase::StageSelect => STAGE_SELECT_TARGET_COORDS,
         AutomationPhase::CharacterSelect => CHAR_SELECT_TARGET_COORDS,
-        _ => anyhow::bail!("cursor movement is unavailable in the current phase"),
+        _ => return,
     };
-    let cursor_position =
-        get_cursor_position().ok_or_else(|| anyhow::anyhow!("cursor position is unavailable"))?;
+    let cursor_position = get_cursor_position().ok_or_else(|| return).unwrap();
     let mut cursor_buttons = 0;
     if cursor_position.0 < cursor_target.0 - CURSOR_POS_THRESHOLD {
         cursor_buttons |= KEY_RIGHT;
@@ -65,7 +64,7 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
         let held_frames = CURSOR_HOLD_FRAMES.load(Ordering::Relaxed);
         if held_frames >= MAX_CURSOR_HOLD_FRAMES {
             CURSOR_HOLD_FRAMES.store(0, Ordering::Relaxed);
-            return Ok(());
+            return;
         }
         CURSOR_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
         unsafe {
@@ -74,16 +73,15 @@ pub fn move_cursor(state: *mut NpadHandheldState) -> Result<()> {
     } else {
         CURSOR_HOLD_FRAMES.store(0, Ordering::Relaxed);
     }
-    Ok(())
 }
 
 pub fn reset_character_selected() {
     CHARACTER_SELECTED.store(false, Ordering::Relaxed);
 }
 
-pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
+pub fn press_buttons(state: *mut NpadHandheldState) {
     if state.is_null() {
-        anyhow::bail!("controller state is unavailable");
+        return;
     }
 
     let phase = mode::get_current_phase();
@@ -126,6 +124,7 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
         AutomationPhase::NewFighterAppeared
         | AutomationPhase::NewFighterResult
         | AutomationPhase::ResultsScreen => KEY_A,
+        AutomationPhase::Milestone => KEY_A,
         _ => 0,
     };
 
@@ -133,7 +132,7 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
         let held_frames = BUTTON_HOLD_FRAMES.load(Ordering::Relaxed);
         if held_frames >= MAX_BUTTON_HOLD_FRAMES {
             BUTTON_HOLD_FRAMES.store(0, Ordering::Relaxed);
-            return Ok(());
+            return;
         }
         BUTTON_HOLD_FRAMES.store(held_frames + 1, Ordering::Relaxed);
 
@@ -143,5 +142,30 @@ pub fn press_buttons(state: *mut NpadHandheldState) -> Result<()> {
     } else {
         BUTTON_HOLD_FRAMES.store(0, Ordering::Relaxed);
     }
-    Ok(())
+}
+
+pub fn move_stick(state: *mut NpadHandheldState) {
+    if state.is_null() {
+        return;
+    }
+
+    let phase = mode::get_current_phase();
+    if phase != AutomationPhase::MatchPlaying {
+        STICK_INPUT_FRAMES.store(0, Ordering::Relaxed);
+        return;
+    }
+
+    let input_frame = STICK_INPUT_FRAMES.fetch_add(1, Ordering::Relaxed) % 10;
+    if input_frame >= 5 {
+        unsafe {
+            (*state).LStickX = 0;
+            (*state).LStickY = 0;
+        }
+        return;
+    }
+
+    unsafe {
+        (*state).LStickX = 0;
+        (*state).LStickY = i32::MAX;
+    }
 }

@@ -1,7 +1,6 @@
 use crate::mode;
 use crate::AutomationPhase;
-use smash::app::sv_math::rand;
-use smash::hash40;
+use rand::{self, Rng};
 
 #[repr(C)]
 struct ControlModuleInternal {
@@ -30,7 +29,8 @@ pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
     }
 
     // Don't press jump on every frame
-    let should_jump = rand(hash40("fighter"), 10) == 0;
+    let mut rng = rand::thread_rng();
+    let should_jump = rng.gen_bool(0.1);
 
     (*controller_data).buttons = if should_jump { 0x4 } else { 0 };
     (*controller_data).stick_x = 1.0;

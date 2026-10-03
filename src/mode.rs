@@ -67,6 +67,8 @@ pub fn update_phase(layout_name: &str) {
         }
         "stage_select2" => AutomationPhase::StageSelect,
         "chara_select" => AutomationPhase::CharacterSelect,
+        "colle_anniversary" => AutomationPhase::Milestone,
+        "anniversary_popup" => AutomationPhase::Milestone,
         _ => AutomationPhase::Other,
     };
     let current_phase = get_current_phase();
