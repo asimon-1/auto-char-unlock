@@ -1,0 +1,27 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    container:
+      image: jugeeya/cargo-skyline:3.2.0-no-dkp
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build release NRO
+        run: cargo-skyline skyline build --release
+        env:
+          HOME: /root
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          generate_release_notes: true
+          files: target/aarch64-skyline-switch/release/libauto_unlock_chars.nro
