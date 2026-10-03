@@ -6,13 +6,14 @@ A small mod which automatically plays offline matches to unlock new fighters in 
 
 Unlocking fighters is a tedious process since it requires someone to actively play matches until a new challenger approaches. This mod aims to ease that process by allowing the matches to play out quickly with a hands-off approach.
 
-The mod works in six phases:
+The mod works in five phases:
 1. On the stage selection screen, move the cursor to small battlefield and press A to select the stage.
 2. On the character selection screen, move the cursor to the center of the screen and press A to select a character then Start to begin a 1v1 match against a CPU.
 3. During the match, override the CPU's controls to hold right and repeatedly jump. This causes them to jump off the stage and self-destruct.
-4. On the results screen, press A to skip through.
-5. On the new challenger screen, press A to skip through.
-6. Fight the challenger if needed and repeat the process.
+4. On any other screen, including menus, results, challenger notifications, and milestone popups screens, press A to continue.
+5. Repeat the process.
+
+The player will repeatedly make stick inputs which are required to unlock fighters. Every 10 minutes, a new fighter should be unlocked. It will take roughly 10 hours to unlock all 63 characters.
 
 ## Installation
 
@@ -22,7 +23,7 @@ I haven't done any compatibility testing with other mods so probably you should 
 
 ## Usage
 
-Set up a ruleset with 1 stock. Once you open the stage selection screen the automation will kick in and you can go do something else.
+In vanilla SSBU (without the mod loaded), set up a ruleset with 1 stock. Then load the mod and the automation will kick in; you can go do something else and check on it later.
 
 To stop the mod, press the sleep button or the home menu and exit the game. Uninstall the mod by deleting the NRO from the plugins folder.
 

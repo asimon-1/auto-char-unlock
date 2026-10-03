@@ -1,9 +1,6 @@
 use crate::mode;
-use crate::AutomationPhase;
+use crate::mode::AutomationPhase;
 use rand::{self, Rng};
-use std::sync::atomic::{AtomicBool, Ordering};
-
-static CPU_CONTROLS_ACTIVE: AtomicBool = AtomicBool::new(false);
 
 #[repr(C)]
 struct ControlModuleInternal {
@@ -29,10 +26,6 @@ pub unsafe fn set_cpu_controls_selfdestruct(control_data: *mut *mut u8) {
     let controller_data = *control_data.add(1) as *mut ControlModuleInternal;
     if controller_data.is_null() {
         return;
-    }
-
-    if !CPU_CONTROLS_ACTIVE.swap(true, Ordering::Relaxed) {
-        println!("[auto-unlock-chars] CPU controls activated");
     }
 
     // Don't press jump on every frame

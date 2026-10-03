@@ -1,5 +1,5 @@
 use crate::mode;
-use crate::AutomationPhase;
+use crate::mode::AutomationPhase;
 use skyline::nn::hid::NpadHandheldState;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 

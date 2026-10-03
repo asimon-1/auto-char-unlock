@@ -1,5 +1,4 @@
 use crate::input;
-use crate::AutomationPhase;
 use nnsdk::ui2d::Pane;
 use skyline;
 use skyline::nn::oe::ReportUserIsActive;
@@ -8,6 +7,16 @@ use smash::app::lua_bind::FighterManager as FighterManagerBindings;
 use smash::app::FighterManager as FighterManagerObject;
 use smash::ui2d::SmashPane;
 use std::sync::{OnceLock, RwLock};
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub enum AutomationPhase {
+    StageSelect,
+    CharacterSelect,
+    MatchPlaying,
+    ConfirmScreen,
+    #[default]
+    Other,
+}
 
 static CURRENT_PHASE: RwLock<AutomationPhase> = RwLock::new(AutomationPhase::Other);
 pub static CURSOR_POS: RwLock<(f32, f32)> = RwLock::new((0.0, 0.0));
@@ -55,12 +64,14 @@ pub fn get_current_phase() -> AutomationPhase {
 
 pub fn update_phase(layout_name: &str) {
     let phase = match layout_name {
-        "challenger_joined" => AutomationPhase::NewFighterResult,
-        "challenger_appeared" => AutomationPhase::NewFighterAppeared,
-        "info_result_window" => AutomationPhase::ResultsScreen,
+        "challenger_joined"
+        | "challenger_appeared"
+        | "info_result_window"
+        | "colle_anniversary"
+        | "anniversary_popup" => AutomationPhase::ConfirmScreen,
         "info_melee" => {
             if is_results_screen() {
-                AutomationPhase::ResultsScreen
+                AutomationPhase::ConfirmScreen
             } else {
                 AutomationPhase::MatchPlaying
             }

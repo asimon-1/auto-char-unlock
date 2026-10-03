@@ -3,18 +3,6 @@ mod hooks;
 mod input;
 mod mode;
 
-#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
-pub enum AutomationPhase {
-    StageSelect,
-    CharacterSelect,
-    MatchPlaying,
-    ResultsScreen,
-    NewFighterAppeared,
-    NewFighterResult,
-    #[default]
-    Other,
-}
-
 #[skyline::main(name = "auto-unlock-chars")]
 pub fn main() {
     println!("[auto-unlock-chars] Initializing plugin");
