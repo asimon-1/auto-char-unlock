@@ -4,6 +4,17 @@ use crate::mode;
 use nnsdk::ui2d::Layout;
 use skyline::nn::hid::{GetNpadHandheldState, NpadHandheldState};
 
+extern "C" {
+    #[link_name = "\u{1}_ZN2nn3hid15PermitVibrationEb"]
+    fn permit_vibration(enabled: bool) -> u32;
+}
+
+pub fn disable_rumble() {
+    unsafe {
+        permit_vibration(false);
+    }
+}
+
 fn hook_panic() {
     std::panic::set_hook(Box::new(|info| {
         let location = info.location().unwrap();
