@@ -17,6 +17,10 @@ The player will repeatedly make stick inputs which are required to unlock fighte
 
 ## Installation
 
+Install [Skyline](https://github.com/skyline-dev/skyline) before you install this mod.
+
+Download [libauto_unlock_chars.nro](https://github.com/asimon-1/auto-char-unlock/releases/latest/download/libauto_unlock_chars.nro) from the latest release.
+
 To use this mod, install it to the plugins folder at `SD:/atmosphere/contents/01006A800016E000/romfs/skyline/plugins/libauto_unlock_chars.nro`
 
 I haven't done any compatibility testing with other mods so probably you should remove all other NROs. You're unlocking characters on a fresh install of SSBU without playing your switch, so really you shouldn't need anything else.
