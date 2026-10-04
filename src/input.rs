@@ -163,6 +163,6 @@ pub fn move_stick(state: *mut NpadHandheldState) {
 
     unsafe {
         (*state).LStickX = 0;
-        (*state).LStickY = i32::MIN;
+        (*state).LStickY = i32::MAX;
     }
 }
