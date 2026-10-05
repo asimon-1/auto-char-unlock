@@ -16,6 +16,7 @@ const KEY_LEFT: u64 = 0x1000;
 const KEY_DOWN: u64 = 0x8000;
 const KEY_UP: u64 = 0x2000;
 const KEY_A: u64 = 0x1;
+const KEY_B: u64 = 0x2;
 const KEY_START: u64 = 0x400;
 const MAX_BUTTON_HOLD_FRAMES: u8 = 12;
 const MAX_CURSOR_HOLD_FRAMES: u8 = 64;
@@ -122,6 +123,7 @@ pub fn press_buttons(state: *mut NpadHandheldState) {
             }
         }
         AutomationPhase::MatchPlaying => 0,
+        AutomationPhase::ExitScreen => KEY_B,
         _ => KEY_A,
     };
 
